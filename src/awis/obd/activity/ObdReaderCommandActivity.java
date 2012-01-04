@@ -29,25 +29,12 @@ import android.widget.AdapterView.OnItemSelectedListener;
 public class ObdReaderCommandActivity extends Activity implements
 		OnItemSelectedListener {
 
-	/**
-	 * @uml.property  name="commands"
-	 */
+	
 	final private ArrayList<ObdCommand> commands = ObdConfig.getAllCommands();
-	/**
-	 * @uml.property  name="cmdMap"
-	 * @uml.associationEnd  qualifier="getDesc:java.lang.String awis.obd.command.ObdCommand"
-	 */
+	
 	private Map<String, ObdCommand> cmdMap = null;
 	protected static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-	/**
-	 * @uml.property  name="handler"
-	 * @uml.associationEnd  
-	 */
 	private Handler handler = null;
-	/**
-	 * @uml.property  name="prefs"
-	 * @uml.associationEnd  
-	 */
 	private SharedPreferences prefs = null;
 	private final static String NO_SELECTION_TXT = "Choose Command to Run...";
 
