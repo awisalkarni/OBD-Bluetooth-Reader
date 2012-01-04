@@ -116,14 +116,8 @@ public class ObdReaderCommandActivity extends Activity implements
 		setText(msg, false);
 	}
 
-	/**
-	 * @author  Awis
-	 */
 	private class ObdReaderCommandActivityWorkerThread extends Thread {
-		/**
-		 * @uml.property  name="cmd"
-		 * @uml.associationEnd  
-		 */
+		
 		ObdCommand cmd = null;
 
 		private ObdReaderCommandActivityWorkerThread(ObdCommand cmd) {
