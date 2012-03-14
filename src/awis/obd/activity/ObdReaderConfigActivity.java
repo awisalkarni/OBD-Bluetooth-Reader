@@ -3,6 +3,7 @@ package awis.obd.activity;
 import java.util.ArrayList;
 import java.util.Set;
 
+import awis.obd.activity.R;
 import awis.obd.command.ObdCommand;
 import awis.obd.config.ObdConfig;
 import android.app.Activity;

@@ -5,8 +5,8 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Map;
 
-import awis.obd.R;
 import awis.obd.activity.ObdReaderConfigActivity;
+import awis.obd.activity.R;
 import awis.obd.command.ObdCommand;
 
 import android.app.Notification;

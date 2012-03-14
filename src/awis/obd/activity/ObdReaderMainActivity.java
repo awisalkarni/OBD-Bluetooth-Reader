@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import awis.obd.activity.R;
 import awis.obd.command.ObdCommand;
 import awis.obd.config.ObdConfig;
 import awis.obd.drawable.CoolantGaugeView;
