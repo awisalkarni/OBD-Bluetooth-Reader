@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import awis.obd.R;
+import awis.obd.activity.R;
 import awis.obd.command.ObdCommand;
 import awis.obd.command.ObdMultiCommand;
 import awis.obd.config.ObdConfig;

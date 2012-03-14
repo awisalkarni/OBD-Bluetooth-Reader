@@ -1,7 +1,5 @@
 package awis.obd.drawable;
 
-import awis.obd.R;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -10,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import awis.obd.activity.R;
 
 public class AccelGaugeView extends GradientGaugeView {
 
