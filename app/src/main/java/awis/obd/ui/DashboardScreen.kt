@@ -18,10 +18,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +46,8 @@ fun DashboardScreen(
     onLaunchWizard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isCockpitView by remember { mutableStateOf(true) }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -58,27 +65,90 @@ fun DashboardScreen(
             )
         }
 
-        // Primary Gauges: Speed & RPM
+        // Dashboard Mode Selector (Cockpit vs Standard)
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                StatCard(
-                    title = "SPEED",
-                    value = "${telemetry.speed}",
-                    unit = telemetry.speedUnit,
-                    accentColor = Color(0xFF00E5FF),
-                    modifier = Modifier.weight(1f)
+                Text(
+                    text = if (isCockpitView) "Sport Cockpit" else "Digital Readout",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
-                StatCard(
-                    title = "RPM",
-                    value = "${telemetry.rpm}",
-                    unit = "RPM",
-                    accentColor = Color(0xFFFF9100),
-                    modifier = Modifier.weight(1f)
-                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = isCockpitView,
+                        onClick = { isCockpitView = true },
+                        label = { Text("Dials") }
+                    )
+                    FilterChip(
+                        selected = !isCockpitView,
+                        onClick = { isCockpitView = false },
+                        label = { Text("Digital") }
+                    )
+                }
             }
+        }
+
+        // Primary Gauges: Speed & RPM
+        item {
+            if (isCockpitView) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val maxSpeed = if (telemetry.speedUnit == "mph") 160f else 240f
+                    CircularDialGauge(
+                        value = telemetry.speed.toFloat(),
+                        maxValue = maxSpeed,
+                        title = "SPEED",
+                        unit = telemetry.speedUnit,
+                        accentColor = Color(0xFF00E5FF),
+                        subText = "Vehicle Speed",
+                        modifier = Modifier.weight(1f)
+                    )
+                    CircularDialGauge(
+                        value = telemetry.rpm.toFloat(),
+                        maxValue = 8000f,
+                        redlineStartValue = 6500f,
+                        title = "TACHOMETER",
+                        unit = "RPM",
+                        accentColor = Color(0xFFFF9100),
+                        subText = "Redline 6.5k",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        title = "SPEED",
+                        value = "${telemetry.speed}",
+                        unit = telemetry.speedUnit,
+                        accentColor = Color(0xFF00E5FF),
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatCard(
+                        title = "RPM",
+                        value = "${telemetry.rpm}",
+                        unit = "RPM",
+                        accentColor = Color(0xFFFF9100),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+
+        // Accel G-Force Gauge (Re-imagined AccelGaugeView)
+        item {
+            AccelGForceGauge(
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         // Coolant Gauge
