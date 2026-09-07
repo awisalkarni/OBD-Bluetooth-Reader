@@ -21,21 +21,40 @@ Originally developed for Android 2.x/3.x, this project has been modernized to mo
 
 ## Features
 
-### 1. Live Telemetry Dashboard
-- **Speed & RPM:** Real-time speed (km/h or mph) and engine RPM gauges.
-- **Coolant Temperature Gauge:** Dynamic color-coded gradient temperature bar with cold/normal/hot status.
-- **Fuel Economy:** Instant and average fuel consumption calculated dynamically from MAF (Mass Air Flow) or MAP (Manifold Absolute Pressure).
+### 1. Live Telemetry Dashboard & Sport Cockpit
+- **Sport Cockpit Mode:** Custom high-refresh canvas `CircularDialGauge` for RPM and Speed, plus dynamic G-Force Accelerometer bubble.
+- **Coolant Temperature Gauge:** Dynamic color-coded temperature bar with cold/normal/hot status alerts.
+- **Fuel Economy Engine:** Instant and average fuel consumption calculated dynamically from MAF or MAP.
 - **Environment & Runtime:** Ambient air temperature, intake air temperature, and engine runtime.
 - **Live Parameters Table:** Full scrollable list of all queried OBD-II sensors and status readings.
 - **Foreground Service:** Continuous background reading with status notification.
 
-### 2. ELM327 Command Terminal
+### 2. Setup Wizard & ELM327 Probe
+- **3-Step Guided Wizard:** Bluetooth permissions, device discovery, automated handshake probing (`ATZ`, `ATE0`, `ATRV`, `ATSP0`, `ATDP`).
+- **Vehicle Presets:** 1-tap configuration presets (Compact Sedan, Turbo Hatch, SUV/Truck, Custom).
+
+### 3. DTC Fault Code Scanner & Diagnostics
+- **Comprehensive Fault Code Registry:** Embedded database with descriptions, severity ratings (`CRITICAL`, `WARNING`, `INFO`), symptoms, and probable causes.
+- **Mode 0101 Status Check:** Real-time MIL (Check Engine Light) indicator and active DTC count.
+- **Mode 03 Scan & Mode 04 Clear:** Read active diagnostic fault codes with one-tap clearing (with safety confirmation dialog).
+
+### 4. Trip Telemetry Logging & CSV/JSON Export
+- **Automated / Manual Session Recorder:** Record timestamped RPM, speed, coolant temp, fuel economy, and optional GPS coordinates.
+- **Trip Summaries:** Calculates peak speed, average speed, max RPM, duration, and approximate distance.
+- **One-Tap Export:** Share log files directly to Google Drive, email, or messaging apps via Android `FileProvider` in CSV or JSON format.
+
+### 5. ELM327 Demo Simulator Mode
+- **Zero-Hardware Testing:** Built-in dynamic vehicle emulator simulating realistic driving curves, gear changes, coolant warming, and DTC fault injection.
+- **Full App Compatibility:** Allows complete testing of dashboards, gauges, diagnostic scanning, terminal queries, and logging without an OBD adapter or car.
+
+### 6. ELM327 Command Terminal
 - Run ad-hoc standard OBD-II PIDs and ELM327 AT commands (`ATZ`, `ATE0`, `ATSP0`, `0100`, etc.).
 - Inspect diagnostic trouble codes (`Mode 03`) and reset DTC error codes (`Mode 04`).
 - Interactive console with formatted results and raw hex buffers.
 
-### 3. Settings & Preferences
+### 7. Settings & Preferences
 - **Bluetooth Adapter Picker:** Discover and select from bonded ELM327 Bluetooth devices.
+- **Simulator Mode & Auto Logging Toggles:** Switch between hardware Bluetooth and simulation instantly.
 - **Unit System:** Metric (km/h, °C, kPa) and Imperial (mph, °F, atm) conversion.
 - **Vehicle Customization:** Engine displacement (liters) and volumetric efficiency calibration.
 - **PID Selector:** Enable or disable individual sensor commands to optimize polling rates.
