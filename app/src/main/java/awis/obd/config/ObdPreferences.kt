@@ -59,6 +59,14 @@ class ObdPreferences(context: Context) {
         get() = prefs.getString(KEY_READER_CONFIG, "atsp0\natz") ?: "atsp0\natz"
         set(value) = prefs.edit().putString(KEY_READER_CONFIG, value).apply()
 
+    var vehicleProfileName: String
+        get() = prefs.getString("vehicle_profile_name", "My Vehicle") ?: "My Vehicle"
+        set(value) = prefs.edit().putString("vehicle_profile_name", value).apply()
+
+    var isWizardCompleted: Boolean
+        get() = prefs.getBoolean("is_wizard_completed", false)
+        set(value) = prefs.edit().putBoolean("is_wizard_completed", value).apply()
+
     fun isCommandEnabled(commandDesc: String): Boolean {
         return prefs.getBoolean(PREFIX_CMD_ENABLED + commandDesc, true)
     }

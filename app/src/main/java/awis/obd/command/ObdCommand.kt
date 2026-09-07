@@ -80,6 +80,7 @@ open class ObdCommand(
         if (lines.isEmpty()) return ""
         // Take first relevant line that contains hex or response
         val target = lines.firstOrNull { !it.startsWith("AT") && !it.startsWith("SEARCHING") } ?: lines[0]
-        return target.replace(" ", "").trim()
+        val isAtCmd = cmd?.startsWith("AT", ignoreCase = true) == true
+        return if (isAtCmd) target.trim() else target.replace(" ", "").trim()
     }
 }

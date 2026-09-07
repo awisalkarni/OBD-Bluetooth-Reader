@@ -38,6 +38,7 @@ fun DashboardScreen(
     selectedDeviceName: String?,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
+    onLaunchWizard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -52,7 +53,8 @@ fun DashboardScreen(
                 telemetry = telemetry,
                 deviceName = selectedDeviceName,
                 onStartService = onStartService,
-                onStopService = onStopService
+                onStopService = onStopService,
+                onLaunchWizard = onLaunchWizard
             )
         }
 
@@ -186,66 +188,104 @@ fun ConnectionBanner(
     telemetry: ObdTelemetry,
     deviceName: String?,
     onStartService: () -> Unit,
-    onStopService: () -> Unit
+    onStopService: () -> Unit,
+    onLaunchWizard: () -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val statusDotColor = when (telemetry.connectionState) {
-                        ConnectionState.CONNECTED -> Color(0xFF00E676)
-                        ConnectionState.CONNECTING, ConnectionState.INITIALIZING -> Color(0xFFFF9100)
-                        ConnectionState.ERROR -> Color(0xFFFF5252)
-                        ConnectionState.DISCONNECTED -> Color(0xFF9E9E9E)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val statusDotColor = when (telemetry.connectionState) {
+                            ConnectionState.CONNECTED -> Color(0xFF00E676)
+                            ConnectionState.CONNECTING, ConnectionState.INITIALIZING -> Color(0xFFFF9100)
+                            ConnectionState.ERROR -> Color(0xFFFF5252)
+                            ConnectionState.DISCONNECTED -> Color(0xFF9E9E9E)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .width(10.dp)
+                                .height(10.dp)
+                                .clip(RoundedCornerShape(5.dp))
+                                .background(statusDotColor)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = telemetry.statusMessage,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
-                    Box(
-                        modifier = Modifier
-                            .width(10.dp)
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(statusDotColor)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = telemetry.statusMessage,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
+                        text = deviceName ?: "No adapter configured",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = deviceName ?: "No adapter selected",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+                if (telemetry.connectionState == ConnectionState.CONNECTED ||
+                    telemetry.connectionState == ConnectionState.CONNECTING ||
+                    telemetry.connectionState == ConnectionState.INITIALIZING
+                ) {
+                    OutlinedButton(
+                        onClick = onStopService,
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5252))
+                    ) {
+                        Text("Stop")
+                    }
+                } else if (deviceName != null) {
+                    Button(
+                        onClick = onStartService,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF), contentColor = Color.Black)
+                    ) {
+                        Text("Start Live")
+                    }
+                } else {
+                    Button(
+                        onClick = onLaunchWizard,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF), contentColor = Color.Black)
+                    ) {
+                        Text("Setup Wizard")
+                    }
+                }
             }
 
-            if (telemetry.connectionState == ConnectionState.CONNECTED ||
-                telemetry.connectionState == ConnectionState.CONNECTING ||
-                telemetry.connectionState == ConnectionState.INITIALIZING
-            ) {
-                OutlinedButton(
-                    onClick = onStopService,
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5252))
+            if (deviceName == null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF161B22))
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Stop")
-                }
-            } else {
-                Button(
-                    onClick = onStartService,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF), contentColor = Color.Black)
-                ) {
-                    Text("Start Live")
+                    Text(
+                        text = "First time? Run Setup Wizard to detect your ELM327",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.LightGray,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedButton(
+                        onClick = onLaunchWizard,
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text("Start Wizard", fontSize = 12.sp)
+                    }
                 }
             }
         }

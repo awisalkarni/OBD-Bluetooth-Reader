@@ -99,4 +99,30 @@ class ObdCommandTest {
         val metricResult = feCmd.formatResult()
         assertTrue("Result should contain kml", metricResult.contains("kml"))
     }
+
+    @Test
+    fun testAtCommandsParsing() {
+        val atz = ObdCommand("ATZ", "Reset")
+        val atzRes = atz.parseResult("ELM327 v1.5\r\n>")
+        assertEquals("ELM327 v1.5", atzRes)
+
+        val atrv = ObdCommand("ATRV", "Voltage")
+        val atrvRes = atrv.parseResult("12.6V\r\n>")
+        assertEquals("12.6V", atrvRes)
+
+        val atdp = ObdCommand("ATDP", "Protocol")
+        val atdpRes = atdp.parseResult("ISO 15765-4 (CAN 11/500)\r\n>")
+        assertEquals("ISO 15765-4 (CAN 11/500)", atdpRes)
+    }
+
+    @Test
+    fun testVehiclePresetsIntegrity() {
+        val presets = awis.obd.ui.VEHICLE_PRESETS
+        assertTrue("Presets should not be empty", presets.isNotEmpty())
+        for (p in presets) {
+            assertTrue("Displacement should be positive", p.displacement > 0.0)
+            assertTrue("VE should be in reasonable range 0.5-1.2", p.ve in 0.5..1.2)
+            assertTrue("Title should be non-blank", p.title.isNotBlank())
+        }
+    }
 }

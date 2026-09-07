@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -46,6 +47,7 @@ import awis.obd.ui.CommandScreen
 import awis.obd.ui.DashboardScreen
 import awis.obd.ui.ObdReaderTheme
 import awis.obd.ui.SettingsScreen
+import awis.obd.ui.SetupWizardScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -176,67 +178,85 @@ class ObdReaderMainActivity : ComponentActivity() {
     @Composable
     private fun MainApp() {
         var selectedTabIndex by remember { mutableIntStateOf(0) }
+        var showWizard by remember {
+            mutableStateOf(!prefs.isWizardCompleted && prefs.selectedDeviceAddress == null)
+        }
         val telemetry by ObdReaderService.serviceState.collectAsState()
         val scope = rememberCoroutineScope()
 
         val screens = listOf(Screen.Dashboard, Screen.Terminal, Screen.Settings)
 
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "OBD-II Reader",
-                            color = Color.White
+        if (showWizard) {
+            SetupWizardScreen(
+                prefs = prefs,
+                onFinish = {
+                    showWizard = false
+                    selectedTabIndex = 0
+                },
+                onCancel = {
+                    showWizard = false
+                }
+            )
+        } else {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "OBD-II Reader",
+                                color = Color.White
+                            )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color(0xFF1E2228)
                         )
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF1E2228)
                     )
-                )
-            },
-            bottomBar = {
-                NavigationBar(
-                    containerColor = Color(0xFF1E2228)
+                },
+                bottomBar = {
+                    NavigationBar(
+                        containerColor = Color(0xFF1E2228)
+                    ) {
+                        screens.forEachIndexed { index, screen ->
+                            NavigationBarItem(
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                icon = { Text(screen.badge, fontSize = 20.sp) },
+                                label = { Text(screen.title) }
+                            )
+                        }
+                    }
+                },
+                snackbarHost = { SnackbarHost(snackbarHostState) }
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 ) {
-                    screens.forEachIndexed { index, screen ->
-                        NavigationBarItem(
-                            selected = selectedTabIndex == index,
-                            onClick = { selectedTabIndex = index },
-                            icon = { Text(screen.badge, fontSize = 20.sp) },
-                            label = { Text(screen.title) }
+                    when (selectedTabIndex) {
+                        0 -> DashboardScreen(
+                            telemetry = telemetry,
+                            selectedDeviceName = prefs.selectedDeviceName,
+                            onStartService = { startObdService() },
+                            onStopService = { stopObdService() },
+                            onLaunchWizard = { showWizard = true }
+                        )
+                        1 -> CommandScreen(
+                            onRunCommand = { cmd -> runSingleCommandDirectly(cmd) },
+                            isConnected = telemetry.connectionState == ConnectionState.CONNECTED
+                        )
+                        2 -> SettingsScreen(
+                            prefs = prefs,
+                            onSettingsChanged = {
+                                // If service is running, restart it to apply new settings
+                                if (ObdReaderService.isServiceRunning) {
+                                    stopObdService()
+                                    startObdService()
+                                }
+                            },
+                            onLaunchWizard = { showWizard = true }
                         )
                     }
-                }
-            },
-            snackbarHost = { SnackbarHost(snackbarHostState) }
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                when (selectedTabIndex) {
-                    0 -> DashboardScreen(
-                        telemetry = telemetry,
-                        selectedDeviceName = prefs.selectedDeviceName,
-                        onStartService = { startObdService() },
-                        onStopService = { stopObdService() }
-                    )
-                    1 -> CommandScreen(
-                        onRunCommand = { cmd -> runSingleCommandDirectly(cmd) },
-                        isConnected = telemetry.connectionState == ConnectionState.CONNECTED
-                    )
-                    2 -> SettingsScreen(
-                        prefs = prefs,
-                        onSettingsChanged = {
-                            // If service is running, restart it to apply new settings
-                            if (ObdReaderService.isServiceRunning) {
-                                stopObdService()
-                                startObdService()
-                            }
-                        }
-                    )
                 }
             }
         }
