@@ -37,6 +37,7 @@ class TroubleCodesObdCommand(
 ) : ObdCommand(cmd, desc, resType, impType) {
 
     private val codes = StringBuilder()
+    val parsedCodeList = mutableListOf<String>()
 
     companion object {
         private val DTC_LETTERS = charArrayOf('P', 'C', 'B', 'U')
@@ -50,7 +51,8 @@ class TroubleCodesObdCommand(
 
     override fun formatResult(): String {
         val res = cleanRawResult()
-        if (res.contains("NODATA")) return "No Trouble Codes"
+        parsedCodeList.clear()
+        if (res.contains("NODATA") || res == "4300") return "No Trouble Codes"
         if (res.isEmpty()) return ""
 
         val lines = rawResult.split("\r", "\n").filter { it.isNotBlank() }
@@ -69,12 +71,14 @@ class TroubleCodesObdCommand(
                         val letter = DTC_LETTERS.getOrElse(letterIdx) { 'P' }
                         val digit1 = (valInt and 0x3000) shr 12
                         val rest = String.format(java.util.Locale.US, "%03X", valInt and 0x0FFF)
-                        codes.append("$letter$digit1$rest\n")
+                        val code = "$letter$digit1$rest"
+                        parsedCodeList.add(code)
+                        codes.append("$code\n")
                     } catch (_: Exception) {
                     }
                     idx += 4
                 }
-            } else if (!clean.startsWith("AT") && !clean.startsWith("SEARCHING")) {
+            } else if (!clean.startsWith("AT") && !clean.startsWith("SEARCHING") && !clean.startsWith("OK")) {
                 codes.append(clean).append("\n")
             }
         }

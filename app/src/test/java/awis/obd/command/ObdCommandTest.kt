@@ -125,4 +125,40 @@ class ObdCommandTest {
             assertTrue("Title should be non-blank", p.title.isNotBlank())
         }
     }
+
+    @Test
+    fun testDtcDatabaseKnownCodes() {
+        val misfire = DtcDatabase.lookup("P0300")
+        assertEquals(DtcSeverity.CRITICAL, misfire.severity)
+        assertTrue(misfire.title.contains("Misfire", ignoreCase = true))
+
+        val catalyst = DtcDatabase.lookup("P0420")
+        assertEquals(DtcSeverity.WARNING, catalyst.severity)
+        assertTrue(catalyst.system.contains("Emissions", ignoreCase = true))
+
+        val evap = DtcDatabase.lookup("P0442")
+        assertEquals(DtcSeverity.INFO, evap.severity)
+    }
+
+    @Test
+    fun testDtcDatabaseGenericFallback() {
+        val genericChassis = DtcDatabase.lookup("C0123")
+        assertTrue(genericChassis.system.contains("Chassis", ignoreCase = true))
+
+        val genericNetwork = DtcDatabase.lookup("U0999")
+        assertTrue(genericNetwork.system.contains("Network", ignoreCase = true))
+    }
+
+    @Test
+    fun testTroubleCodesObdCommandParsedList() {
+        val tc = TroubleCodesObdCommand()
+        // Mode 03 response with P0133 and P0300
+        // P0133 = 0x0133, P0300 = 0x0300
+        val result = tc.parseResult("43 01 33 03 00 00 00\r\n>")
+        assertTrue(result.contains("P0133"))
+        assertTrue(result.contains("P0300"))
+        assertEquals(2, tc.parsedCodeList.size)
+        assertEquals("P0133", tc.parsedCodeList[0])
+        assertEquals("P0300", tc.parsedCodeList[1])
+    }
 }

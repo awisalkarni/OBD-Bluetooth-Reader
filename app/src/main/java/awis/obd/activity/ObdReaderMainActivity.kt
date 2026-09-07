@@ -45,6 +45,7 @@ import awis.obd.io.ObdConnection
 import awis.obd.io.ObdReaderService
 import awis.obd.ui.CommandScreen
 import awis.obd.ui.DashboardScreen
+import awis.obd.ui.DtcScannerScreen
 import awis.obd.ui.ObdReaderTheme
 import awis.obd.ui.SettingsScreen
 import awis.obd.ui.SetupWizardScreen
@@ -54,6 +55,7 @@ import kotlinx.coroutines.withContext
 
 sealed class Screen(val title: String, val badge: String) {
     data object Dashboard : Screen("Dashboard", "📊")
+    data object Diagnostics : Screen("Faults", "⚠️")
     data object Terminal : Screen("Terminal", "💻")
     data object Settings : Screen("Settings", "⚙️")
 }
@@ -184,7 +186,7 @@ class ObdReaderMainActivity : ComponentActivity() {
         val telemetry by ObdReaderService.serviceState.collectAsState()
         val scope = rememberCoroutineScope()
 
-        val screens = listOf(Screen.Dashboard, Screen.Terminal, Screen.Settings)
+        val screens = listOf(Screen.Dashboard, Screen.Diagnostics, Screen.Terminal, Screen.Settings)
 
         if (showWizard) {
             SetupWizardScreen(
@@ -241,11 +243,15 @@ class ObdReaderMainActivity : ComponentActivity() {
                             onStopService = { stopObdService() },
                             onLaunchWizard = { showWizard = true }
                         )
-                        1 -> CommandScreen(
+                        1 -> DtcScannerScreen(
                             onRunCommand = { cmd -> runSingleCommandDirectly(cmd) },
                             isConnected = telemetry.connectionState == ConnectionState.CONNECTED
                         )
-                        2 -> SettingsScreen(
+                        2 -> CommandScreen(
+                            onRunCommand = { cmd -> runSingleCommandDirectly(cmd) },
+                            isConnected = telemetry.connectionState == ConnectionState.CONNECTED
+                        )
+                        3 -> SettingsScreen(
                             prefs = prefs,
                             onSettingsChanged = {
                                 // If service is running, restart it to apply new settings
