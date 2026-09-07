@@ -41,6 +41,7 @@ import awis.obd.io.ObdTelemetry
 fun DashboardScreen(
     telemetry: ObdTelemetry,
     selectedDeviceName: String?,
+    isSimulatorMode: Boolean = false,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
     onLaunchWizard: () -> Unit,
@@ -58,7 +59,8 @@ fun DashboardScreen(
         item {
             ConnectionBanner(
                 telemetry = telemetry,
-                deviceName = selectedDeviceName,
+                deviceName = if (isSimulatorMode) "Demo Simulator Active" else selectedDeviceName,
+                isSimulatorMode = isSimulatorMode,
                 onStartService = onStartService,
                 onStopService = onStopService,
                 onLaunchWizard = onLaunchWizard
@@ -257,6 +259,7 @@ fun DashboardScreen(
 fun ConnectionBanner(
     telemetry: ObdTelemetry,
     deviceName: String?,
+    isSimulatorMode: Boolean = false,
     onStartService: () -> Unit,
     onStopService: () -> Unit,
     onLaunchWizard: () -> Unit

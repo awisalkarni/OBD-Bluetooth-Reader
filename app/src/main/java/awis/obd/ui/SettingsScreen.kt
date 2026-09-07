@@ -192,11 +192,57 @@ fun SettingsScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Text(
-                        text = "General Settings",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Demo Simulator Mode", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                "Emulate dynamic ELM327 vehicle data without hardware",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        var isSim by remember { mutableStateOf(prefs.isSimulatorMode) }
+                        Switch(
+                            checked = isSim,
+                            onCheckedChange = {
+                                isSim = it
+                                prefs.isSimulatorMode = it
+                                onSettingsChanged()
+                            }
+                        )
+                    }
+
+                    HorizontalDivider()
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Auto Trip Logging", style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                "Automatically record telemetry to CSV when service connects",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        var isAutoLog by remember { mutableStateOf(prefs.isAutoTripLoggingEnabled) }
+                        Switch(
+                            checked = isAutoLog,
+                            onCheckedChange = {
+                                isAutoLog = it
+                                prefs.isAutoTripLoggingEnabled = it
+                                onSettingsChanged()
+                            }
+                        )
+                    }
+
+                    HorizontalDivider()
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),

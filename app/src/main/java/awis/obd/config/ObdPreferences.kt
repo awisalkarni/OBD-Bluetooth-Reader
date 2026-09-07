@@ -67,6 +67,14 @@ class ObdPreferences(context: Context) {
         get() = prefs.getBoolean("is_wizard_completed", false)
         set(value) = prefs.edit().putBoolean("is_wizard_completed", value).apply()
 
+    var isSimulatorMode: Boolean
+        get() = prefs.getBoolean("is_simulator_mode", false)
+        set(value) = prefs.edit().putBoolean("is_simulator_mode", value).apply()
+
+    var isAutoTripLoggingEnabled: Boolean
+        get() = prefs.getBoolean("is_auto_trip_logging", false)
+        set(value) = prefs.edit().putBoolean("is_auto_trip_logging", value).apply()
+
     fun isCommandEnabled(commandDesc: String): Boolean {
         return prefs.getBoolean(PREFIX_CMD_ENABLED + commandDesc, true)
     }

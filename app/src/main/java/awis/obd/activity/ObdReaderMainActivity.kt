@@ -49,6 +49,7 @@ import awis.obd.ui.DtcScannerScreen
 import awis.obd.ui.ObdReaderTheme
 import awis.obd.ui.SettingsScreen
 import awis.obd.ui.SetupWizardScreen
+import awis.obd.ui.TripLogScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,6 +57,7 @@ import kotlinx.coroutines.withContext
 sealed class Screen(val title: String, val badge: String) {
     data object Dashboard : Screen("Dashboard", "📊")
     data object Diagnostics : Screen("Faults", "⚠️")
+    data object Logs : Screen("Logs", "📁")
     data object Terminal : Screen("Terminal", "💻")
     data object Settings : Screen("Settings", "⚙️")
 }
@@ -116,7 +118,7 @@ class ObdReaderMainActivity : ComponentActivity() {
     }
 
     private fun startObdService() {
-        if (prefs.selectedDeviceAddress.isNullOrBlank()) {
+        if (!prefs.isSimulatorMode && prefs.selectedDeviceAddress.isNullOrBlank()) {
             Toast.makeText(this, "Please select an OBD adapter in Settings first", Toast.LENGTH_LONG).show()
             return
         }
@@ -141,6 +143,15 @@ class ObdReaderMainActivity : ComponentActivity() {
 
     @SuppressLint("MissingPermission")
     private suspend fun runSingleCommandDirectly(command: ObdCommand): String = withContext(Dispatchers.IO) {
+        if (prefs.isSimulatorMode) {
+            val cmdStr = command.cmd ?: ""
+            val simResponse = awis.obd.io.Elm327Simulator.respondToCommand(cmdStr)
+            val inStream = simResponse.byteInputStream()
+            val outStream = java.io.ByteArrayOutputStream()
+            command.isImperial = prefs.isImperialUnits
+            return@withContext command.execute(inStream, outStream)
+        }
+
         val deviceAddress = prefs.selectedDeviceAddress
             ?: return@withContext "Error: No Bluetooth OBD adapter selected in Settings"
 
@@ -186,7 +197,7 @@ class ObdReaderMainActivity : ComponentActivity() {
         val telemetry by ObdReaderService.serviceState.collectAsState()
         val scope = rememberCoroutineScope()
 
-        val screens = listOf(Screen.Dashboard, Screen.Diagnostics, Screen.Terminal, Screen.Settings)
+        val screens = listOf(Screen.Dashboard, Screen.Diagnostics, Screen.Logs, Screen.Terminal, Screen.Settings)
 
         if (showWizard) {
             SetupWizardScreen(
@@ -239,6 +250,7 @@ class ObdReaderMainActivity : ComponentActivity() {
                         0 -> DashboardScreen(
                             telemetry = telemetry,
                             selectedDeviceName = prefs.selectedDeviceName,
+                            isSimulatorMode = prefs.isSimulatorMode,
                             onStartService = { startObdService() },
                             onStopService = { stopObdService() },
                             onLaunchWizard = { showWizard = true }
@@ -247,11 +259,14 @@ class ObdReaderMainActivity : ComponentActivity() {
                             onRunCommand = { cmd -> runSingleCommandDirectly(cmd) },
                             isConnected = telemetry.connectionState == ConnectionState.CONNECTED
                         )
-                        2 -> CommandScreen(
+                        2 -> TripLogScreen(
+                            telemetry = telemetry
+                        )
+                        3 -> CommandScreen(
                             onRunCommand = { cmd -> runSingleCommandDirectly(cmd) },
                             isConnected = telemetry.connectionState == ConnectionState.CONNECTED
                         )
-                        3 -> SettingsScreen(
+                        4 -> SettingsScreen(
                             prefs = prefs,
                             onSettingsChanged = {
                                 // If service is running, restart it to apply new settings

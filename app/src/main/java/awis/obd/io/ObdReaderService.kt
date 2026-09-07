@@ -19,6 +19,7 @@ import androidx.core.app.ServiceCompat
 import awis.obd.activity.ObdReaderMainActivity
 import awis.obd.config.ObdConfig
 import awis.obd.config.ObdPreferences
+import awis.obd.log.TripLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -92,6 +93,32 @@ class ObdReaderService : Service() {
         }
 
         val prefs = ObdPreferences(this)
+
+        if (prefs.isSimulatorMode) {
+            updateNotification("ELM327 Simulator Running")
+            Elm327Simulator.start()
+            if (prefs.isAutoTripLoggingEnabled && !TripLogger.isLogging.value) {
+                TripLogger.startTrip(this)
+            }
+            connectionJob = serviceScope.launch {
+                Elm327Simulator.telemetry.collect { telemetry ->
+                    _serviceState.value = telemetry
+                    if (TripLogger.isLogging.value && telemetry.connectionState == ConnectionState.CONNECTED) {
+                        TripLogger.recordPoint(telemetry)
+                    }
+                    val status = when (telemetry.connectionState) {
+                        ConnectionState.CONNECTED -> "Sim: RPM ${telemetry.rpm} | ${telemetry.speed} ${telemetry.speedUnit}"
+                        ConnectionState.CONNECTING -> "Starting Demo Simulator..."
+                        ConnectionState.INITIALIZING -> "Simulator initializing..."
+                        ConnectionState.ERROR -> telemetry.statusMessage
+                        ConnectionState.DISCONNECTED -> "Simulator Stopped"
+                    }
+                    updateNotification(status)
+                }
+            }
+            return
+        }
+
         val deviceAddress = prefs.selectedDeviceAddress
 
         if (deviceAddress.isNullOrBlank()) {
@@ -125,6 +152,10 @@ class ObdReaderService : Service() {
             return
         }
 
+        if (prefs.isAutoTripLoggingEnabled && !TripLogger.isLogging.value) {
+            TripLogger.startTrip(this)
+        }
+
         // Filter enabled commands
         val activeCommands = ObdConfig.getCommands().filter {
             prefs.isCommandEnabled(it.desc)
@@ -149,6 +180,9 @@ class ObdReaderService : Service() {
         connectionJob = serviceScope.launch {
             connection.telemetry.collect { telemetry ->
                 _serviceState.value = telemetry
+                if (TripLogger.isLogging.value && telemetry.connectionState == ConnectionState.CONNECTED) {
+                    TripLogger.recordPoint(telemetry)
+                }
                 val status = when (telemetry.connectionState) {
                     ConnectionState.CONNECTED -> "RPM: ${telemetry.rpm} | Speed: ${telemetry.speed} ${telemetry.speedUnit}"
                     ConnectionState.CONNECTING -> "Connecting to ${device.name ?: device.address}..."
@@ -168,8 +202,12 @@ class ObdReaderService : Service() {
     private fun stopObdService() {
         isServiceRunning = false
         connectionJob?.cancel()
+        Elm327Simulator.stop()
         obdConnection?.stop()
         obdConnection = null
+        if (TripLogger.isLogging.value) {
+            TripLogger.stopTrip()
+        }
         _serviceState.value = ObdTelemetry(
             connectionState = ConnectionState.DISCONNECTED,
             statusMessage = "Stopped"
